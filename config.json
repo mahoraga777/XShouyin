@@ -1,0 +1,6 @@
+{
+  "Thumb_Up": "firefox",
+  "Victory": "hyprctl dispatch workspace 1",
+  "Open_Palm": "hyprctl dispatch workspace 2",
+  "Closed_Fist": "pkill firefox"
+}

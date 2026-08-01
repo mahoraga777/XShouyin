@@ -1,6 +1,20 @@
+import os
+import urllib.request
+
 import cv2
 import mediapipe as mp
 import time
+
+### Download model if not installed ###
+
+MODEL_PATH = 'gesture_recognizer.task'
+MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task'
+
+if not os.path.exists(MODEL_PATH):
+    print("ML Model file is missing \n no worry we are on to it")
+    urllib.request.urlretrive(MODEL_URL, MODEL_PATH)
+    print("Ok model is download you are ready to go")
+
 
 #### MediaPipe Task Imports ####
 
@@ -14,14 +28,16 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 current_gesture = "None"
 confidence_score = 0.0
-
-#track exact second hand was last seen
 last_seen_time = time.time()
+
+#### varible to hold external function ####
+
+callback_action = None
 
 #### Callback function executed in background thread whenever MediaPipe processes a frame ####
 
 def handle_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
-    global current_gesture, confidence_score, last_seen_time
+    global current_gesture, confidence_score, last_seen_time, callback_action
     
     ### if  model recoginize at least one hand ###
     if result.gestures and len(result.gestures) > 0:
@@ -34,46 +50,9 @@ def handle_result(result: GestureRecognizerResult, output_image: mp.Image, times
         current_gesture = "None"
         confidence_score = 0.0  # <-- Added this so it resets properly!
 
-#### Configure options, setting up hardware and path  ####
-options = GestureRecognizerOptions(
-    base_options=BaseOptions(model_asset_path='gesture_recognizer.task'),
-    running_mode=VisionRunningMode.LIVE_STREAM,
-    result_callback=handle_result
-)
+def get_latest_gesture():
+    ###return the name of current gesture
+    return current_gesture
 
-### live webcam loop ##
-
-# saifty fall back # 
-with GestureRecognizer.create_from_options(options) as recognizer:
-    cap = cv2.VideoCapture(0)  # now we are up for live video 
-    
-    # todo: insted of opning video all the time what if we have shortcut to open it
-    # todo: what if insted of 30fps we took low process speed while we are not using it and increase the speed once we see piticualr hand sign
-
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        # Convert BGR to RGB for MediaPipe since openCV don't support human redibility 
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
-
-        # Monotonically increasing timestamp
-        timestamp_ms = int(time.time() * 1000)
-        
-        #provide image to mediaPipe ai 
-        recognizer.recognize_async(mp_image, timestamp_ms)
-
-        ### logic to break the loop when hand not seen for n = 15 sec 
-        idle_time = time.time() - last_seen_time
-
-        if idle_time > 15:
-            print("me no see no hand")
-            break
-
-        # Print feed to terminal or handle sign stream
-        if current_gesture != "None":
-            print(f"Detected Sign: {current_gesture} ({confidence_score * 100:.1f}%)")
-
-    cap.release()
+def is_idle(timeout=15):
+    return (time.time()- last_seen_time) > timeout
