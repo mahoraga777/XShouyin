@@ -12,6 +12,8 @@ options = gesture.GestureRecognizerOptions(
     base_options=gesture.BaseOptions(model_asset_path=gesture.MODEL_PATH),
     running_mode=gesture.VisionRunningMode.LIVE_STREAM,
     result_callback=gesture.handle_result
+    min_hand_detection_confidence = 0.7
+    
 )
 
 print("Starting Xshouyan System...")
