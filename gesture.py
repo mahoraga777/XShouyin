@@ -45,7 +45,8 @@ def handle_result(result: GestureRecognizerResult, output_image: mp.Image, times
         top_gesture = result.gestures[0][0]
         current_gesture = top_gesture.category_name
         confidence_score = top_gesture.score
-        last_seen_time = time.time() #reset the last seen time
+        #reset the last seen time
+        last_seen_time = time.time() 
     else:
         current_gesture = "None"
         confidence_score = 0.0  # <-- Added this so it resets properly!
@@ -54,5 +55,5 @@ def get_latest_gesture():
     ###return the name of current gesture
     return current_gesture
 
-def is_idle(timeout=15):
+def is_idle(timeout: int):
     return (time.time()- last_seen_time) > timeout
