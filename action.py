@@ -9,6 +9,9 @@ def trigger_action(gesture_name):
     if gesture_name in gesture_map:
         command = gesture_map[gesture_name]
         print(f"Triggering command for {gesture_name}: {command}")
-        # subprocess.Popen(command, shell=True)
+        try:
+            subprocess.Popen(command, shell=True)
+        except Exception as e:
+            print(command,"command failed")
     else:
         print(f"No action mapped for: {gesture_name}")
