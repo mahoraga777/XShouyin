@@ -2,6 +2,8 @@
 
 > **Privacy-first hand gesture control for Linux & Hyprland.**
 
+#NOTE: Still In development
+
 Xshouyan is an offline background daemon that uses hand gestures to control the Linux desktop. It separates gesture recognition, action mapping, and system execution into independent components.
 
 [![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black)](https://www.kernel.org/)
