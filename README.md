@@ -215,36 +215,7 @@ Hyprland / Linux
 
 ---
 
-## Components
-
-### `main.py` — Orchestrator
-
-Controls the application lifecycle.
-
-* Runs the camera loop
-* Requests gesture detection
-* Handles debouncing
-* Manages idle and exit states
-* Dispatches detected gestures
-
-### `gesture.py` — ML Engine
-
-Handles gesture recognition.
-
-* Captures webcam frames
-* Processes frames through the ML pipeline
-* Detects hand gestures
-* Returns the detected gesture name
-
-### `action.py` — OS Handler
-
-Converts gestures into system actions.
-
-* Receives the detected gesture
-* Looks up the configured mapping
-* Executes the corresponding command
-
-### `config.json` — User Mappings
+## `config.json` — User Mappings
 
 Defines what each gesture should do.
 
