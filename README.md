@@ -137,18 +137,6 @@ The **ML layer detects what the user is doing**.
 The **action layer decides what that gesture means**.
 
 The **OS layer executes the result**.
-
-This s# Xshouyan
-
-> **Privacy-first hand gesture control for Linux & Hyprland.**
-
-Xshouyan is an offline background daemon that uses hand gestures to control the Linux desktop. It separates gesture recognition, action mapping, and system execution into independent components.
-
-[![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black)](https://www.kernel.org/)
-[![Hyprland](https://img.shields.io/badge/Hyprland-58E1FF?style=flat-square&logo=hyprland&logoColor=black)](https://hyprland.org/)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Offline](https://img.shields.io/badge/Offline-Privacy--First-2ea44f?style=flat-square)](#)
-
 ---
 
 ## Architecture
