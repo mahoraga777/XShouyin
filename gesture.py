@@ -58,6 +58,7 @@ def handle_result(result: GestureRecognizerResult, output_image: mp.Image, times
             point_direction = "Center"
     else:
         current_gesture = "None"
+        time.sleep(0.01)
         confidence_score = 0.0  
         index_x = 0.0
         index_y = 0.0
