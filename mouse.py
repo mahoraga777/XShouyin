@@ -1,58 +1,88 @@
-import subprocess
 import math
+import tkinter as tk
+from evdev import UInput, ecodes as e, AbsInfo
 
 class MouseController:
-    def __init__(self, sensitivity=2.5, smoothing=0.3, deadzone=0.002):
-        self.prev_cam_x = None
-        self.prev_cam_y = None
+    """
+    Direct kernel-level mouse controller.
+    Writes zero-latency hardware interrupts to /dev/uinput.
+    """
+    
+    def __init__(self):
+        # 1. Hardware Resolution
+        root = tk.Tk()
+        root.withdraw()
+        self.screen_w = root.winfo_screenwidth()
+        self.screen_h = root.winfo_screenheight()
         
-        # Velocity accumulators for the gliding effect
-        self.vel_x = 0.0
-        self.vel_y = 0.0
+        # 2. Kernel Device Initialization
+        # We define a virtual hardware device with absolute positioning capabilities
+        cap = {
+            e.EV_KEY: [e.BTN_LEFT, e.BTN_RIGHT],
+            e.EV_ABS: [
+                (e.ABS_X, AbsInfo(value=0, min=0, max=self.screen_w, fuzz=0, flat=0, resolution=0)),
+                (e.ABS_Y, AbsInfo(value=0, min=0, max=self.screen_h, fuzz=0, flat=0, resolution=0))
+            ]
+        }
+        self.ui = UInput(cap, name="xshouyan-pointer")
         
-        self.sensitivity = sensitivity
-        self.smoothing = smoothing
-        self.deadzone = deadzone  # Filters out camera noise
+        # 3. State & Filter Variables
+        self.curr_x: float = 0.0
+        self.curr_y: float = 0.0
+        self.is_first_move: bool = True
+        
+        self.deadzone_px: float = 2.0 
+        self.min_dist: float = 5.0    
+        self.max_dist: float = 80.0   
+        self.min_alpha: float = 0.15  
+        self.max_alpha: float = 1.0   
 
-    def move_relative(self, camera_x, camera_y):
-        # 1. Drop anchor on the first frame
-        if self.prev_cam_x is None:
-            self.prev_cam_x = camera_x
-            self.prev_cam_y = camera_y
+    def _calculate_dynamic_alpha(self, distance: float) -> float:
+        """Calculates kinematic filter weight."""
+        if distance >= self.max_dist: return self.max_alpha
+        if distance <= self.min_dist: return self.min_alpha
+        
+        ratio = (distance - self.min_dist) / (self.max_dist - self.min_dist)
+        return self.min_alpha + ratio * (self.max_alpha - self.min_alpha)
+
+    def move_absolute(self, cam_x: float, cam_y: float) -> None:
+        """Maps coordinates and dispatches direct memory writes to the kernel."""
+        # Removed the (1.0 - cam_x) inversion here
+        target_x = cam_x * self.screen_w
+        target_y = cam_y * self.screen_h
+
+        if self.is_first_move:
+            self.curr_x, self.curr_y = target_x, target_y
+            self.is_first_move = False
             return
 
-        # 2. Calculate the delta (finger movement distance)
-        # We negate X to account for the webcam mirror effect
-        delta_x = -(camera_x - self.prev_cam_x)
-        delta_y = (camera_y - self.prev_cam_y)
+        distance = math.hypot(target_x - self.curr_x, target_y - self.curr_y)
+        
+        if distance < self.deadzone_px:
+            return 
+            
+        alpha = self._calculate_dynamic_alpha(distance)
 
-        self.prev_cam_x = camera_x
-        self.prev_cam_y = camera_y
+        self.curr_x += (target_x - self.curr_x) * alpha
+        self.curr_y += (target_y - self.curr_y) * alpha
 
-        # 3. Filter out micro-jitters
-        if math.hypot(delta_x, delta_y) < self.deadzone:
-            return
+        # Zero-Latency Event Dispatch
+        self.ui.write(e.EV_ABS, e.ABS_X, int(self.curr_x))
+        self.ui.write(e.EV_ABS, e.ABS_Y, int(self.curr_y))
+        self.ui.syn()
 
-        # 4. Multiply finger twitches into screen pixels
-        # Assuming standard 1080p ratio base for multiplication
-        target_vel_x = delta_x * 1920 * self.sensitivity
-        target_vel_y = delta_y * 1080 * self.sensitivity
+    def reset(self) -> None:
+        self.is_first_move = True
 
-        # 5. Apply Low-Pass smoothing to the velocity
-        self.vel_x += (target_vel_x - self.vel_x) * self.smoothing
-        self.vel_y += (target_vel_y - self.vel_y) * self.smoothing
+    def left_click(self) -> None:
+        """Simulates physical hardware interrupts for click down, then click up."""
+        self.ui.write(e.EV_KEY, e.BTN_LEFT, 1)
+        self.ui.syn()
+        self.ui.write(e.EV_KEY, e.BTN_LEFT, 0)
+        self.ui.syn()
 
-        # 6. Push to kernel
-        if abs(self.vel_x) > 1 or abs(self.vel_y) > 1:
-            command = ["ydotool", "mousemove", "-x", str(int(self.vel_x)), "-y", str(int(self.vel_y))]
-            subprocess.Popen(command)
-
-    def reset(self):
-        # Clears the anchor so the mouse doesn't jump when you drop your hand
-        self.prev_cam_x = None
-        self.prev_cam_y = None
-        self.vel_x = 0.0
-        self.vel_y = 0.0
-
-    def left_click(self):
-        subprocess.Popen(["ydotool", "click", "0xC0"])
+    def right_click(self) -> None:
+        self.ui.write(e.EV_KEY, e.BTN_RIGHT, 1)
+        self.ui.syn()
+        self.ui.write(e.EV_KEY, e.BTN_RIGHT, 0)
+        self.ui.syn()

@@ -1,8 +1,3 @@
 {
-  "Thumb_Up": "firefox",
-  "Victory": "hyprctl dispatch 'hl.dsp.focus({ workspace = -1 })'",
-  "Open_Palm": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"+1\" })'",
-  "Closed_Fist": "hyprctl dispatch 'hl.dsp.focus({ workspace = 3 })'",
-  "Thumb_Down": "kitty",
   "ILoveYou": "notify-send 'Gesture System' 'I Love You verified!'" 
 }
