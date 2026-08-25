@@ -31,7 +31,7 @@ class MouseController:
         self.curr_y: float = 0.0
         self.is_first_move: bool = True
         
-        self.deadzone_px: float = 2.0 
+        self.deadzone_px: float = 1.0 
         self.min_dist: float = 5.0    
         self.max_dist: float = 80.0   
         self.min_alpha: float = 0.15  
