@@ -7,6 +7,7 @@ import sys
 import gesture
 from action import trigger_action
 from mouse import MouseController
+from dictation import DictationController
 
 # MediaPipe Configuration
 options = gesture.GestureRecognizerOptions(
@@ -21,6 +22,7 @@ print("Starting Xshouyan System in headless mode...")
 
 # Initialize Peripherals
 mouse = MouseController() 
+assistant = DictationController()
 previous_sign = "None"
 last_trigger_time = 0.0
 cooldown_time = 2.0
@@ -74,10 +76,16 @@ try:
                     previous_sign = detected_sign
                     
                     if detected_sign == "Victory":
+                        print("left clic")
                         mouse.left_click()
                     elif detected_sign == "Open_Palm":
+                        print("right click")
                         mouse.right_click()
+                    elif detected_sign == "Thumb_Up":
+                        print("speech to text")
+                        assistant.trigger_async()
                     elif detected_sign not in ["Pointing_Up"]:
+                        print(detected_sign)
                         trigger_action(detected_sign)
             elif detected_sign == "None":
                 previous_sign = "None"
