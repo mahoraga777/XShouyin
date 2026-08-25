@@ -1,0 +1,6 @@
+opencv-python>=4.13.0
+mediapipe>=0.10.35
+evdev>=2.0.0
+faster-whisper>=1.2.1
+PyAudio>=0.2.14
+numpy>=2.4.6
