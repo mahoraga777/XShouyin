@@ -33,7 +33,7 @@ class MouseController:
         
         self.deadzone_px: float = 1.0 
         self.min_dist: float = 5.0    
-        self.max_dist: float = 80.0   
+        self.max_dist: float = 40.0   
         self.min_alpha: float = 0.15  
         self.max_alpha: float = 1.0   
 
@@ -46,10 +46,23 @@ class MouseController:
         return self.min_alpha + ratio * (self.max_alpha - self.min_alpha)
 
     def move_absolute(self, cam_x: float, cam_y: float) -> None:
-        """Maps coordinates and dispatches direct memory writes to the kernel."""
-        # Removed the (1.0 - cam_x) inversion here
-        target_x = cam_x * self.screen_w
-        target_y = cam_y * self.screen_h
+        """Maps coordinates with an active zone margin to ensure screen edge reachability."""
+        
+        # 1. Define margins (e.g., 15% padding on all sides)
+        margin = 0.15 
+        active_span = 1.0 - (margin * 2)
+
+        # 2. Normalize camera coordinates to the new smaller active zone
+        norm_x = (cam_x - margin) / active_span
+        norm_y = (cam_y - margin) / active_span
+
+        # 3. Clamp values strictly between 0.0 and 1.0 to prevent out-of-bounds kernel crashes
+        norm_x = max(0.0, min(1.0, norm_x))
+        norm_y = max(0.0, min(1.0, norm_y))
+
+        # 4. Map to screen resolution
+        target_x = norm_x * self.screen_w
+        target_y = norm_y * self.screen_h
 
         if self.is_first_move:
             self.curr_x, self.curr_y = target_x, target_y
