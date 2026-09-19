@@ -2,85 +2,54 @@
 
 > **Privacy-first hand gesture control for Linux & Hyprland.**
 
-#NOTE: Still In development
+> ⚠️ **Development Status: Early Alpha**
+> *Xshouyan is currently in active development. While the feature set is still growing, the core application is designed to be entirely offline and privacy-respecting. It processes everything locally on your machine, making it completely safe and secure to test.*
 
-Xshouyan is an offline background daemon that uses hand gestures to control the Linux desktop. It separates gesture recognition, action mapping, and system execution into independent components.
+Xshouyan is an offline background daemon that uses hand gestures and speech-to-text dictation to control the Linux desktop. It separates gesture recognition, audio processing, action mapping, and system execution into independent components, ensuring a fast, modular, and privacy-first user experience.
 
-[![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black)](https://www.kernel.org/)
-[![Hyprland](https://img.shields.io/badge/Hyprland-58E1FF?style=flat-square&logo=hyprland&logoColor=black)](https://hyprland.org/)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Offline](https://img.shields.io/badge/Offline-Privacy--First-2ea44f?style=flat-square)](#)
+## 🚀 Getting Started
 
----
+### Prerequisites
 
-## Architecture
+Ensure you have **Python 3** and **Git** installed on your system.
 
-```text
-                           XSHOUYAN
-                              │
-                              ▼
-                    ┌──────────────────┐
-                    │     main.py      │
-                    │   Orchestrator   │
-                    │                  │
-                    │ Camera Loop      │
-                    │ Debouncing       │
-                    │ State Management │
-                    └────────┬─────────┘
-                             │
-              ┌──────────────┴──────────────┐
-              │                             │
-              ▼                             ▼
-     ┌──────────────────┐          ┌──────────────────┐
-     │   gesture.py     │          │    action.py     │
-     │                  │          │                  │
-     │    ML Engine     │          │   OS Handler     │
-     └────────┬─────────┘          └────────┬─────────┘
-              │                             │
-              ▼                             ▼
-     ┌──────────────────┐          ┌──────────────────┐
-     │     Webcam       │          │    config.json   │
-     │   /dev/video0    │          │   User Mappings  │
-     └──────────────────┘          └────────┬─────────┘
-                                            │
-                                            ▼
-                                   ┌──────────────────┐
-                                   │  Hyprland / Linux│
-                                   │    IPC / Shell   │
-                                   └──────────────────┘
-````
+### Setup Instructions
 
-## Data Flow
+1. **Clone the repository:**
 
-```text
-Webcam
-  │
-  ▼
-gesture.py
-  │
-  │ detected gesture
-  ▼
-main.py
-  │
-  │ gesture name
-  ▼
-action.py
-  │
-  │ lookup mapping
-  ▼
-config.json
-  │
-  │ IPC / Bash command
-  ▼
-Hyprland / Linux
-```
+   ```bash
+   git clone https://github.com/mahoraga777/XShouyin.git
+   cd XShouyin
+   ```
 
----
+2. **Create and activate a virtual environment (Recommended):**
+   Keeps the project dependencies isolated from your system.
 
+   ```bash
+   python3 -m venv venv
+   ```
 
-# `config.json` — User Mappings
+   * **macOS/Linux (Bash/Zsh):** `source venv/bin/activate`
+   * **macOS/Linux (Fish):** `source venv/bin/activate.fish`
 
-Defines what each gesture should do.
+3. **Install Dependencies:**
+   With your virtual environment active, install the required packages using the requirements file:
+
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+
+4. **Run the Project:**
+
+   ```bash
+   python main.py
+   ```
+
+## ⚙️ Configuration
+
+**`config.json` — User Mappings**
+
+This file defines what each detected gesture should do. By keeping this separate, recognition remains independent from the OS actions being performed.
 
 ```json
 {
@@ -90,182 +59,90 @@ Defines what each gesture should do.
 }
 ```
 
-This keeps gesture recognition independent from the actions being performed.
+## 🏗️ Architecture
 
----
+Xshouyan follows a strict separation of concerns, making each part easier to modify, test, and extend.
 
-## Project Structure
+* The **ML layers** (Vision & Audio) detect what the user is doing or saying.
+* The **Action layer** routes those inputs (either updating the mouse or running commands).
+* The **OS layer** executes the resulting command.
+
+### Component Map
 
 ```text
-xshouyan/
-├── main.py          # Application orchestrator
-├── gesture.py       # Gesture recognition / ML engine
-├── action.py        # OS action handler
+                                XSHOUYAN
+                                   │
+                                   ▼
+                         ┌──────────────────┐
+                         │     main.py      │
+                         │   Orchestrator   │
+                         │                  │
+                         │ AV Sync & Loop   │
+                         │ State Management │
+                         └────────┬─────────┘
+                                  │
+           ┌──────────────────────┼──────────────────────┐
+           │                      │                      │
+           ▼                      ▼                      ▼
+  ┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐
+  │    gesture.py    │   │   dictation.py   │   │    action.py     │
+  │                  │   │                  │   │                  │
+  │ Vision ML Engine │   │ Speech-to-Text   │   │ Command Routing  │
+  └────────┬─────────┘   └────────┬─────────┘   └────────┬─────────┘
+           │                      │                      │
+           ▼                      ▼                      │
+  ┌──────────────────┐   ┌──────────────────┐            ▼
+  │      Webcam      │   │    Microphone    │   ┌──────────────────┐
+  │   /dev/video0    │   │   Audio Stream   │   │     mouse.py     │
+  └──────────────────┘   └──────────────────┘   │  Cursor Control  │
+                                                └────────┬─────────┘
+                                                         │
+                                                ┌────────▼─────────┐
+                                                │   config.json    │
+                                                │  User Mappings   │
+                                                └────────┬─────────┘
+                                                         │
+                                                         ▼
+                                                ┌──────────────────┐
+                                                │  Hyprland/Linux  │
+                                                │   IPC / Shell    │
+                                                └──────────────────┘
+```
+
+### Data Flow
+
+```text
+Webcam / Microphone
+  │
+  ▼
+gesture.py / dictation.py  ──────> (detects gesture / parses audio)
+  │
+  ▼
+main.py                    ──────> (reads state & syncs events)
+  │
+  ▼
+action.py                  ──────> (routes logic)
+  │
+  ├──► mouse.py            ──────> (moves cursor / clicks)
+  │
+  └──► config.json         ──────> (returns IPC / Bash command)
+         │
+         ▼
+       Hyprland / Linux
+```
+
+## 📁 Project Structure
+
+```text
+XShouyin/
+├── main.py          # Application orchestrator handling the main event loop
+├── gesture.py       # Vision ML engine / Hand gesture detection
+├── dictation.py     # Speech-to-text / Audio processing (Triggered by gestures)
+├── action.py        # OS action handler and routing
+├── mouse.py         # Precision mouse movement and coordinate mapping
 ├── config.json      # User-defined gesture mappings
-└── README.md
-```
-
----
-
-## Design
-
-Xshouyan follows a simple separation of concerns:
-
-```text
-┌──────────────────┐
-│ Gesture Detection│
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│   Gesture Name   │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│  Action Mapping  │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│   OS Execution   │
-└──────────────────┘
-```
-
-The **ML layer detects what the user is doing**.
-
-The **action layer decides what that gesture means**.
-
-The **OS layer executes the result**.
----
-
-## Architecture
-
-```text
-                           XSHOUYAN
-                              │
-                              ▼
-                    ┌──────────────────┐
-                    │     main.py      │
-                    │   Orchestrator   │
-                    │                  │
-                    │ Camera Loop      │
-                    │ Debouncing       │
-                    │ State Management │
-                    └────────┬─────────┘
-                             │
-              ┌──────────────┴──────────────┐
-              │                             │
-              ▼                             ▼
-     ┌──────────────────┐          ┌──────────────────┐
-     │   gesture.py     │          │    action.py     │
-     │                  │          │                  │
-     │    ML Engine     │          │   OS Handler     │
-     └────────┬─────────┘          └────────┬─────────┘
-              │                             │
-              ▼                             ▼
-     ┌──────────────────┐          ┌──────────────────┐
-     │     Webcam       │          │    config.json   │
-     │   /dev/video0    │          │   User Mappings  │
-     └──────────────────┘          └────────┬─────────┘
-                                            │
-                                            ▼
-                                   ┌──────────────────┐
-                                   │  Hyprland / Linux│
-                                   │    IPC / Shell   │
-                                   └──────────────────┘
-````
-
-## Data Flow
-
-```text
-Webcam
-  │
-  ▼
-gesture.py
-  │
-  │ detected gesture
-  ▼
-main.py
-  │
-  │ gesture name
-  ▼
-action.py
-  │
-  │ lookup mapping
-  ▼
-config.json
-  │
-  │ IPC / Bash command
-  ▼
-Hyprland / Linux
-```
-
----
-
-## `config.json` — User Mappings
-
-Defines what each gesture should do.
-
-```json
-{
-  "thumb_up": "hyprctl dispatch workspace +1",
-  "fist": "hyprctl dispatch workspace -1",
-  "peace": "playerctl play-pause"
-}
-```
-
-This keeps gesture recognition independent from the actions being performed.
-
----
-
-## Project Structure
-
-```text
-xshouyan/
-├── main.py          # Application orchestrator
-├── gesture.py       # Gesture recognition / ML engine
-├── action.py        # OS action handler
-├── config.json      # User-defined gesture mappings
-└── README.md
-```
-
----
-
-## Design
-
-Xshouyan follows a simple separation of concerns:
-
-```text
-┌──────────────────┐
-│ Gesture Detection│
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│   Gesture Name   │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│  Action Mapping  │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│   OS Execution   │
-└──────────────────┘
-```
-
-The **ML layer detects what the user is doing**.
-
-The **action layer decides what that gesture means**.
-
-The **OS layer executes the result**.
-
-This separation makes each part easier to modify, test, and extend.
-
-```
-eparation makes each part easier to modify, test, and extend.
-
+├── requirements.txt # Project dependencies list
+├── .gitignore       # Git ignore rules
+├── LICENSE          # BSD 3-Clause License
+└── README.md        # Project documentation
 ```
