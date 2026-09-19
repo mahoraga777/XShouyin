@@ -57,7 +57,7 @@ try:
             index_x, index_y = gesture.get_index_coordinates()
 
             # 1. State Toggle Logic
-            if detected_sign == "Closed_Fist":
+            if detected_sign == "Open_Palm":
                 if (current_time - last_toggle_time) > toggle_cooldown:
                     is_tracking = not is_tracking
                     last_toggle_time = current_time
@@ -70,7 +70,7 @@ try:
                 mouse.reset()
                 
             # 3. Discrete Actions Logic
-            if detected_sign != "None" and detected_sign != "Closed_Fist":
+            if detected_sign != "None" and detected_sign != "Open_Palm":
                 if detected_sign != previous_sign and (current_time - last_trigger_time > cooldown_time):
                     last_trigger_time = current_time
                     previous_sign = detected_sign
@@ -78,15 +78,17 @@ try:
                     if detected_sign == "Victory":
                         print("left clic")
                         mouse.left_click()
-                    elif detected_sign == "Open_Palm":
-                        print("right click")
                         mouse.right_click()
                     elif detected_sign == "Thumb_Up":
+                        mouse.scroll_up()
+                        print("scroll_up")
+                    elif detected_sign == "Thumb_Down":
                         print("speech to text")
                         assistant.trigger_async()
                     elif detected_sign not in ["Pointing_Up"]:
                         print(detected_sign)
                         trigger_action(detected_sign)
+
             elif detected_sign == "None":
                 previous_sign = "None"
 
@@ -103,5 +105,6 @@ except KeyboardInterrupt:
 finally:
     if 'cap' in locals() and cap.isOpened():
         cap.release()
+        mouse.close()
     print("Camera released cleanly. System offline.")
     sys.exit(0)
