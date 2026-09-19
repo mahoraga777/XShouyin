@@ -22,7 +22,8 @@ class MouseController:
             e.EV_ABS: [
                 (e.ABS_X, AbsInfo(value=0, min=0, max=self.screen_w, fuzz=0, flat=0, resolution=0)),
                 (e.ABS_Y, AbsInfo(value=0, min=0, max=self.screen_h, fuzz=0, flat=0, resolution=0))
-            ]
+            ],
+            e.EV_REL: (e.REL_WHEEL,)
         }
         self.ui = UInput(cap, name="xshouyan-pointer")
         
@@ -98,4 +99,17 @@ class MouseController:
         self.ui.write(e.EV_KEY, e.BTN_RIGHT, 1)
         self.ui.syn()
         self.ui.write(e.EV_KEY, e.BTN_RIGHT, 0)
+
         self.ui.syn()
+
+    def scroll_down(self) -> None:
+        self.ui.write(e.EV_REL, e.REL_WHEEL, -1)
+        self.ui.syn()
+
+    # 3. ACTION: A method for scrolling up
+    def scroll_up(self) -> None:
+        self.ui.write(e.EV_REL, e.REL_WHEEL, 1)
+        self.ui.syn()
+
+    def close(self) ->None:
+        self.ui.close()
